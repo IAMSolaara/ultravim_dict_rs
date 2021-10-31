@@ -52,7 +52,6 @@ pub fn parse_query(query: &str) -> Option<Query> {
     let query_type = dict["query_type"];
     match query_type {
         "GET" => {
-            println!("Got GET");
             return Some(Query {
                 query_type: QueryType::GET,
                 key: String::from(dict["key"]),
@@ -60,7 +59,6 @@ pub fn parse_query(query: &str) -> Option<Query> {
             });
         }
         "PUT" => {
-            println!("Got PUT");
             return Some(Query {
                 query_type: QueryType::PUT,
                 key: String::from(dict["key"]),
@@ -68,7 +66,6 @@ pub fn parse_query(query: &str) -> Option<Query> {
             });
         }
         "DELETE" => {
-            println!("Got DELETE");
             return Some(Query {
                 query_type: QueryType::DELETE,
                 key: String::from(dict["key"]),
