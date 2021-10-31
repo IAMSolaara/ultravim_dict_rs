@@ -2,33 +2,42 @@ use regex::Regex;
 use regex::RegexSet;
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum QueryType {
-    GET, 
+    GET,
     PUT,
-    DELETE
+    DELETE,
 }
 
 #[derive(Debug)]
 pub struct Query {
     query_type: QueryType,
     key: String,
-    value: String
+    value: String,
+}
+
+impl PartialEq for Query {
+    fn eq(&self, other: &Self) -> bool {
+        self.query_type == other.query_type && self.key == other.key && self.value == other.value
+    }
 }
 
 fn print_type_of<T>(_: &T) {
     println!("{}", std::any::type_name::<T>())
 }
 
-pub fn parse_query(query: &str) -> Option<Query>  {
+pub fn parse_query(query: &str) -> Option<Query> {
     let regexes = RegexSet::new(&[
         r"^(?P<query_type>GET) <(?P<key>.{1,255})>$",
         r"^(?P<query_type>PUT) <(?P<key>.{1,255})> <(?P<value>.{1,255})>$",
-        r"^(?P<query_type>DELETE) <(?P<key>.{1,255})> <(?P<value>.{1,255})>$"
-    ]).unwrap();
+        r"^(?P<query_type>DELETE) <(?P<key>.{1,255})> <(?P<value>.{1,255})>$",
+    ])
+    .unwrap();
 
     let matches: Vec<_> = regexes.matches(query).into_iter().collect();
-    if matches.len() != 1 { return None; }
+    if matches.len() != 1 {
+        return None;
+    }
 
     let matched = matches[0];
     let the_right_regex = regexes.patterns()[matched].clone();
@@ -47,7 +56,7 @@ pub fn parse_query(query: &str) -> Option<Query>  {
             return Some(Query {
                 query_type: QueryType::GET,
                 key: String::from(dict["key"]),
-                value: String::from("")
+                value: String::from(""),
             });
         }
         "PUT" => {
@@ -55,7 +64,7 @@ pub fn parse_query(query: &str) -> Option<Query>  {
             return Some(Query {
                 query_type: QueryType::PUT,
                 key: String::from(dict["key"]),
-                value: String::from(dict["value"])
+                value: String::from(dict["value"]),
             });
         }
         "DELETE" => {
@@ -63,11 +72,11 @@ pub fn parse_query(query: &str) -> Option<Query>  {
             return Some(Query {
                 query_type: QueryType::DELETE,
                 key: String::from(dict["key"]),
-                value: String::from(dict["value"])
+                value: String::from(dict["value"]),
             });
         }
 
-        _ => return None
+        _ => return None,
     }
 }
 
@@ -76,22 +85,56 @@ mod tests {
     use super::*;
 
     #[test]
-    fn tests() {
-        println!("Hello, world!");
-
-        let query = parse_query("GET <test>");
-        println!("{:?}", query);
-
-        let query = parse_query("PUT <test_k> <test_v>");
-        println!("{:?}", query);
-        
-        let query = parse_query("DELETE <test_k> <test_v>");
-        println!("{:?}", query);
-        
-        let query = parse_query("GET <test >");
-        println!("{:?}", query);
-
+    fn parser_get_test() {
+        let query = parse_query("GET <test>").unwrap();
+        assert_eq!(
+            query,
+            Query {
+                query_type: QueryType::GET,
+                key: String::from("test"),
+                value: String::from("")
+            }
+        );
+    }
+    #[test]
+    fn parser_put_test() {
+        let query = parse_query("PUT <test_k> <test_v>").unwrap();
+        assert_eq!(
+            query,
+            Query {
+                query_type: QueryType::PUT,
+                key: String::from("test_k"),
+                value: String::from("test_v")
+            }
+        );
+    }
+    #[test]
+    fn parser_delete_test() {
+        let query = parse_query("DELETE <test_k> <test_v>").unwrap();
+        assert_eq!(
+            query,
+            Query {
+                query_type: QueryType::DELETE,
+                key: String::from("test_k"),
+                value: String::from("test_v")
+            }
+        );
+    }
+    #[test]
+    fn parser_get_test_with_spaces() {
+        let query = parse_query("GET <test >").unwrap();
+        assert_eq!(
+            query,
+            Query {
+                query_type: QueryType::GET,
+                key: String::from("test "),
+                value: String::from("")
+            }
+        );
+    }
+    #[test]
+    fn parser_get_test_invalid_key() {
         let query = parse_query("GET <test > ");
-        println!("{:?}", query);
+        assert_eq!(query, None);
     }
 }
