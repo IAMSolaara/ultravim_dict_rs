@@ -26,7 +26,7 @@ fn print_type_of<T>(_: &T) {
     println!("{}", std::any::type_name::<T>())
 }
 
-pub fn parse_query(query: &str) -> Option<Query> {
+pub fn parse_query(query: &str) -> Result<Query, &'static str> {
     let regexes = RegexSet::new(&[
         r"^(?P<query_type>GET) <(?P<key>.{1,255})>$",
         r"^(?P<query_type>PUT) <(?P<key>.{1,255})> <(?P<value>.{1,255})>$",
@@ -36,7 +36,7 @@ pub fn parse_query(query: &str) -> Option<Query> {
 
     let matches: Vec<_> = regexes.matches(query).into_iter().collect();
     if matches.len() != 1 {
-        return None;
+        return Err("Parse error: invalid query format.");
     }
 
     let matched = matches[0];
@@ -52,28 +52,28 @@ pub fn parse_query(query: &str) -> Option<Query> {
     let query_type = dict["query_type"];
     match query_type {
         "GET" => {
-            return Some(Query {
+            return Ok(Query {
                 query_type: QueryType::GET,
                 key: String::from(dict["key"]),
                 value: String::from(""),
             });
         }
         "PUT" => {
-            return Some(Query {
+            return Ok(Query {
                 query_type: QueryType::PUT,
                 key: String::from(dict["key"]),
                 value: String::from(dict["value"]),
             });
         }
         "DELETE" => {
-            return Some(Query {
+            return Ok(Query {
                 query_type: QueryType::DELETE,
                 key: String::from(dict["key"]),
                 value: String::from(dict["value"]),
             });
         }
 
-        _ => return None,
+        _ => return Err("Parse error: invalid query format."),
     }
 }
 
@@ -132,6 +132,6 @@ mod tests {
     #[test]
     fn parser_get_test_invalid_key() {
         let query = parse_query("GET <test > ");
-        assert_eq!(query, None);
+        assert_eq!(query, Err("Parse error: invalid query format."));
     }
 }
