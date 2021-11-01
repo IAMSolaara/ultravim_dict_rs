@@ -2,18 +2,18 @@ use regex::Regex;
 use regex::RegexSet;
 use std::collections::HashMap;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum QueryType {
     GET,
     PUT,
     DELETE,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Query {
-    query_type: QueryType,
-    key: String,
-    value: String,
+    pub query_type: QueryType,
+    pub key: String,
+    pub value: String,
 }
 
 impl PartialEq for Query {
